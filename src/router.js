@@ -9,7 +9,18 @@ const routes = [
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes
+  routes,
+  
+  scrollBehavior(to, from, savedPosition) {
+    if (to.hash) {
+      return {
+        el: to.hash,
+        behavior: 'smooth', 
+        top: 80 
+      }
+    }
+    return { top: 0 } 
+  }
 })
 
 export default router
