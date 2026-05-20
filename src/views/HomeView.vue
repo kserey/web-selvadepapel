@@ -326,27 +326,31 @@ onMounted(() => {
   }
 })
 
-// MODO SELECCIONADO: WHATSAPP DIRECTO (Cero fallos de CORS, conversión inmediata)
+// =========================================================================
+// MODO ACTIVO: WHATSAPP DIRECTO + FILTRO ANTISPAM HONEYPOT
+// =========================================================================
 const enviarContacto = () => {
   if (!formRef.value) return
 
-  // Capturamos el formulario nativo igual que en Compad
+  // Capturamos el formulario nativo (Igual que en tu código exitoso de Compad)
   const formData = new FormData(formRef.value)
 
-    // 🚨 CONTROL TRAMPA: Si el bot llenó este campo, abortamos silenciosamente
-    if (formData.get('username_verification')) {
-      console.log("Bot detectado en el Honeypot.");
-      formRef.value.reset()
-      if (toastInstance) toastInstance.show() // Le mostramos éxito para engañarlo
-      return // Se frena la ejecución aquí, no abre WhatsApp ni manda mail
-    }
+  // 🚨 MEJORA ANTISPAM (HONEYPOT): Si el bot llenó este campo oculto, abortamos en seco
+  if (formData.get('username_verification')) {
+    console.log("Bot detectado en el Honeypot. Ejecución detenida.");
+    formRef.value.reset()
+    // Mostramos el Toast para engañar al bot haciéndole creer que tuvo éxito
+    if (toastInstance) toastInstance.show() 
+    return 
+  }
 
+  // Captura de datos para el bloque de texto
   const name = formData.get('name')
   const email = formData.get('email')
   const subject = formData.get('subject')
   const message = formData.get('message')
 
-  // Tu número corporativo de Selva de Papel (Ej de formato internacional: 569XXXXXXXX)
+  // Tu número oficial de Selva de Papel
   const telefonoWhatsApp = "56944932071"
 
   // Construimos el bloque de texto limpio para abrir la conversación
@@ -363,13 +367,23 @@ const enviarContacto = () => {
 }
 
 /* =========================================================================
-   CÓDIGO OPCIONAL PARA FORMSPREE (Si decides crear la cuenta allá)
+   CÓDIGO RESPALDO: FORMSPREE ASÍNCRONO (Para migrar a Mail en el futuro)
    =========================================================================
-   Solo tendrías que cambiar la función de arriba por esta de aquí abajo:
+   Si decides activar el correo silencioso sin salir de la web, solo debes
+   reemplazar el action del HTML por el endpoint de Formspree, comentar la
+   función de WhatsApp de arriba y activar esta de aquí abajo:
 
 const enviarContacto = async () => {
   if (!formRef.value) return
   const formData = new FormData(formRef.value)
+
+  // 🚨 CONTROL ANTISPAM TAMBIÉN EN EL MODO MAIL
+  if (formData.get('username_verification')) {
+    console.log("Bot detectado en el Honeypot (Modo Mail).");
+    formRef.value.reset()
+    if (toastInstance) toastInstance.show()
+    return
+  }
 
   try {
     const response = await fetch(formRef.value.action, {
@@ -385,6 +399,7 @@ const enviarContacto = async () => {
       alert("Hubo un problema al enviar el mensaje. Intenta nuevamente.")
     }
   } catch (error) {
+    console.error("Error de conexión:", error)
     alert("Error de conexión. Por favor, inténtalo más tarde.")
   }
 }
